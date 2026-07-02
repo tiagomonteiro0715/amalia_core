@@ -27,6 +27,8 @@ uv run main.py
 
 ## Usage in Google Colab
 
+Try it directly in your browser, no local setup required: [Open in Colab](https://colab.research.google.com/drive/18A-UVi2Ci2oWOBYINYLowC7y3GQJqDPg?usp=sharing)
+
 ```python
 !pip install uv
 !uv pip install --system amalia
