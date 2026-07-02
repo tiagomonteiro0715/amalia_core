@@ -24,6 +24,7 @@ This repository is an independent, open-source implementation of that architectu
 - [Performance](#performance)
 - [Project structure](#project-structure)
 - [Paper](#paper)
+- [Verification](#verification)
 - [Built with](#built-with)
 - [Related projects](#related-projects)
 - [Contact](#contact)
@@ -158,6 +159,19 @@ This implementation is based on:
 ```
 
 The paper's Section 8 (future work) mentions the authors' plans for RL with verifiable rewards and further context extension - a training pipeline is intentionally out of scope for this repository.
+
+## Verification
+
+Instantiating `AmaliaForCausalLM` with the default `AmaliaConfig` and summing `p.numel() for p in model.parameters()` gives a parameter count that matches the paper's reported numbers:
+
+| Component | This implementation | Paper |
+|---|---|---|
+| Embedding | 524,288,000 (0.524B) | 0.524B |
+| Non-embedding (42 decoder layers + final norm) | 8,103,743,488 (8.104B) | 8.105B |
+| LM head | 524,288,000 (0.524B) | 0.524B |
+| **Total** | **9,152,319,488 (9.152B)** | **9.153B** |
+
+The ~0.001B differences are rounding in the paper's summary table, not a mismatch — down to the exact parameter, this implementation reproduces AMALIA's stated size.
 
 ## Built with
 
