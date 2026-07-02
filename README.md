@@ -127,7 +127,7 @@ The system was build by creating small, modular pieces of code and then combine 
 - **`SwiGLU`** - the feed-forward block: `down_proj(silu(gate_proj(x)) * up_proj(x))`, the gated activation used by Llama-family models because it consistently improves quality for the same parameter budget.
 - **`DecoderLayer`** - one transformer block: pre-norm residual attention, then pre-norm residual MLP. "Pre-norm" (normalize *before* the sub-layer) is what makes it feasible to stack 42 of these without training instability.
 - **`AmaliaModel`** - The unification of the token embedding with the decoding layer and RMS Norm.
-- - **`AmaliaForCausalLM`** - wraps `AmaliaModel` with an `lm_head` (a `Linear` projecting hidden states to vocabulary logits) and is the class you actually inicialize for language modeling. The head is a separate `Linear`, not tied to the embedding weights, because the spec calls for untied embeddings (`tie_word_embeddings = False`).
+- - **`AmaliaForCausalLM`** - wraps `AmaliaModel` with an `lm_head` (a `Linear` projecting hidden states to vocabulary logits) and is the class you actually initialize for language modeling. The head is a separate `Linear`, not tied to the embedding weights, because the spec calls for untied embeddings (`tie_word_embeddings = False`).
 
 #### Why `AmaliaForCausalLM` and not just `AmaliaModel`
 
