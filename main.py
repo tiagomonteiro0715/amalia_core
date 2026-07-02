@@ -1,9 +1,6 @@
-import sys
-from pathlib import Path
 import torch
 
-from config import AmaliaConfig
-from architecture import AmaliaForCausalLM
+from amalia_core import AmaliaConfig, AmaliaForCausalLM
 
 
 def main():

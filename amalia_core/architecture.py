@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from config import AmaliaConfig
+from .config import AmaliaConfig
 
 
 class RMSNorm(nn.Module):
