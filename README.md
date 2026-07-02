@@ -38,6 +38,11 @@ from amalia import AmaliaConfig, AmaliaForCausalLM
 config = AmaliaConfig()
 model = AmaliaForCausalLM(config)
 
+print(model)
+
+n_params = sum(p.numel() for p in model.parameters())
+print(f"Total parameters: {n_params:,}")
+
 # Run a forward pass on random token ids
 input_ids = torch.randint(0, config.vocab_size, (1, 16))
 logits = model(input_ids)
@@ -81,6 +86,16 @@ Built bottom-up: small standalone pieces first, composed into progressively bigg
 - **`AmaliaForCausalLM`** — wraps `AmaliaModel` with an `lm_head` (a `Linear` projecting hidden states to vocabulary logits) and is the class you actually instantiate for language modeling. The head is a separate `Linear`, not tied to the embedding weights, because the spec calls for untied embeddings (`tie_word_embeddings = False`).
 
 The forward pass, end to end (`AmaliaForCausalLM.forward`): embed token ids → compute RoPE `cos`/`sin` once for the sequence length → run through all 42 decoder layers → final norm → project to vocab logits. There's no KV-cache and no generation loop — this module only defines the architecture's forward pass, not an inference/serving stack, which is intentionally out of scope for what was asked.
+
+#### Why `AmaliaForCausalLM` and not just `AmaliaModel`
+
+`AmaliaModel` and `AmaliaForCausalLM` are kept separate — instead of putting `lm_head` straight into `AmaliaModel` and using only one class — for a few concrete reasons:
+
+- **`AmaliaModel`'s output isn't usable on its own.** It stops at hidden states, shape `[batch, seq, hidden_size=4096]`. Nothing consumes a bag of 4096-dim vectors directly — you always need a task-specific head to turn them into something useful (next-token logits, a classification score, an embedding for retrieval, etc.). `AmaliaForCausalLM` is what adds the *causal language modeling* head — `lm_head`, a `Linear(4096 → 128000)` — that turns hidden states into next-token logits.
+- **The backbone is reusable, the head isn't.** This is the standard split used by every Llama-family implementation (and HuggingFace's `*Model` vs `*ForCausalLM`/`*ForSequenceClassification` convention): the 42 decoder layers, embeddings, and final norm are the expensive, task-agnostic part. If AMALIA were later reused for something other than language modeling — e.g. a classifier head, an embedding model — you'd build a new thin wrapper (`AmaliaForSequenceClassification`, say) around the *same* `AmaliaModel`, instead of duplicating all 42 layers or hacking a second head into one class.
+- **Untied embeddings need a separate `Linear`.** Because the spec sets `tie_word_embeddings = False`, `lm_head` is its own `nn.Linear` with its own weights (not a matmul against `embed_tokens.weight`). That's naturally a "head on top of the backbone" concern, not something `AmaliaModel` itself should own.
+
+In short: `AmaliaModel` = the transformer backbone (what's shared), `AmaliaForCausalLM` = backbone + task head (what you actually run). You always instantiate `AmaliaForCausalLM` in practice; `AmaliaModel` exists as the reusable piece underneath it, not as something meant to be used standalone today.
 
 ### `amalia/__init__.py`
 
