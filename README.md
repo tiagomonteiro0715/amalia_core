@@ -1,6 +1,31 @@
 # AMALIA
 
-AMALIA is a decoder-only transformer architecture inherited from EuroLLM-9B, implemented in plain PyTorch (no external attention kernels).
+<p align="center">
+  <img src="https://img.shields.io/pypi/v/amalia" alt="PyPI"/>
+  <img src="https://img.shields.io/github/license/tiagomonteiro0715/amalia-core" alt="License"/>
+  <img src="https://img.shields.io/badge/python-3.12%2B-blue" alt="Python 3.12+"/>
+  <img src="https://img.shields.io/github/last-commit/tiagomonteiro0715/amalia-core" alt="Last Commit"/>
+  <img src="https://img.shields.io/github/stars/tiagomonteiro0715/amalia-core" alt="Stars"/>
+  <img src="https://img.shields.io/github/forks/tiagomonteiro0715/amalia-core" alt="Forks"/>
+</p>
+
+In 2026, the Portuguese government announced **AMALIA**, a sovereign large language model for European Portuguese, described in the paper *"AMALIA: A Fully Open Large Language Model for European Portuguese"* (PROPOR 2026). AMALIA builds directly on EuroLLM-9B, with two targeted architectural changes: the context window is extended from 4K to 32K tokens, and RoPE's base frequency (θ) is increased from 10,000 to 1,000,000.
+
+This repository is an independent, open-source implementation of that architecture in plain PyTorch (no external attention kernels) — decoder-only, Grouped Query Attention, SwiGLU, RoPE.
+
+> **Scope & disclaimer:** this repository implements the *architecture only* — the model definition and a forward pass. It ships with randomly-initialized weights, not a trained checkpoint, and does not include a training pipeline (see [Paper](#paper) for why). It has no official affiliation with the Portuguese government or the paper's authors.
+
+## Table of contents
+
+- [Local usage (with uv)](#local-usage-with-uv)
+- [Usage in Google Colab](#usage-in-google-colab)
+- [Performance](#performance)
+- [Project structure](#project-structure)
+- [Paper](#paper)
+- [Built with](#built-with)
+- [Related projects](#related-projects)
+- [Contact](#contact)
+- [License](#license)
 
 ## Local usage (with uv)
 
@@ -117,3 +142,53 @@ Re-exports `AmaliaConfig` and `AmaliaForCausalLM` (via `__all__`) so callers can
 ### `main.py`
 
 A minimal runnable example: build a config, build the model with random weights in bf16, move it to GPU and `torch.compile` it if CUDA is available, run one forward pass on random token ids, print the output shape. It exists purely to prove the wiring works end to end (`uv run main.py`) and to double as copy-paste-able usage code.
+
+## Paper
+
+This implementation is based on:
+
+> Simplício, A., Vinagre, G., Ramos, M. M., et al. (2026). **AMALIA: A Fully Open Large Language Model for European Portuguese**. In *Proceedings of the 17th International Conference on Computational Processing of Portuguese (PROPOR 2026)*, Salvador, Brazil, pp. 380–391. [ACL Anthology](https://aclanthology.org/2026.propor-1.38/)
+
+```bibtex
+@inproceedings{simplicio-etal-2026-amalia,
+    title     = "{AMALIA}: A Fully Open Large Language Model for {E}uropean {P}ortuguese",
+    author    = "Simplício, Afonso and Vinagre, Gonçalo and Ramos, Miguel Moura and others",
+    booktitle = "Proceedings of the 17th International Conference on Computational Processing of {P}ortuguese ({PROPOR} 2026)",
+    year      = "2026",
+    address   = "Salvador, Brazil",
+    pages     = "380--391",
+    publisher = "Association for Computational Linguistics"
+}
+```
+
+The paper's Section 8 (future work) mentions the authors' plans for RL with verifiable rewards and further context extension — a training pipeline is intentionally out of scope for this repository.
+
+## Built with
+
+- [PyTorch](https://pytorch.org) — the entire architecture, no other ML framework or external attention kernel
+- [uv](https://github.com/astral-sh/uv) — dependency management, packaging, and the local dev workflow
+
+## Related projects
+
+- [Pessoa](https://github.com/tiagomonteiro0715/pessoa) — local, LLM-agnostic AI agent infrastructure with a Portuguese persona
+- [The Math Behind Artificial Intelligence](https://github.com/tiagomonteiro0715/The-Math-Behind-Artificial-Intelligence-A-Guide-to-AI-Foundations) — a guide to AI's mathematical foundations
+- [FreeCodeCamp author profile](https://www.freecodecamp.org/news/author/tiagomonteiro) — articles and deep dives on AI and programming
+
+## Contact
+
+**Tiago Monteiro**
+
+- Email: monteiro.t@northeastern.edu
+- GitHub: [@tiagomonteiro0715](https://github.com/tiagomonteiro0715)
+- FreeCodeCamp: [Author profile](https://www.freecodecamp.org/news/author/tiagomonteiro)
+
+## License
+
+MIT License. See [LICENSE](LICENSE).
+
+---
+
+<p align="center">
+  If this project was useful or interesting to you, please star the repo.<br>
+  It helps others find it.
+</p>
