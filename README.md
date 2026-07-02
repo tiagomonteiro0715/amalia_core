@@ -34,9 +34,15 @@ uv run main.py
 import torch
 from amalia import AmaliaConfig, AmaliaForCausalLM
 
-# Initialize the model with random weights
+# Initialize the model with random weights (bf16 by default)
 config = AmaliaConfig()
-model = AmaliaForCausalLM(config)
+model = AmaliaForCausalLM(config).to(config.dtype)
+
+# Move to GPU and compile if one is available (e.g. a Colab GPU runtime)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model = model.to(device)
+if device == "cuda":
+    model = torch.compile(model)
 
 print(model)
 
@@ -44,11 +50,16 @@ n_params = sum(p.numel() for p in model.parameters())
 print(f"Total parameters: {n_params:,}")
 
 # Run a forward pass on random token ids
-input_ids = torch.randint(0, config.vocab_size, (1, 16))
+input_ids = torch.randint(0, config.vocab_size, (1, 16), device=device)
 logits = model(input_ids)
 
 print(logits.shape)  # torch.Size([1, 16, 128000])
 ```
+
+## Performance
+
+- **bf16 by default** — `AmaliaConfig.dtype` defaults to `torch.bfloat16`, matching how Llama/EuroLLM-family checkpoints actually ship. It halves memory/bandwidth versus fp32, needs no loss scaling (unlike fp16), and runs fine even without hardware acceleration (CPU, older GPUs) — so it's a safe default everywhere, not just on modern GPUs. `RMSNorm` internally upcasts to fp32 for its variance computation before casting back, since bf16 is too imprecise (~3 decimal digits) for that reduction directly.
+- **`torch.compile` on CUDA** — fuses ops via PyTorch's Inductor backend for a further speedup, with no architecture changes needed (the forward pass has no data-dependent control flow to trip up the compiler). It's applied at the call site (`torch.compile(model)`), gated on `torch.cuda.is_available()`, because Inductor/Triton support for CPU-only or Windows setups is inconsistent — so local CPU development stays fast and reliable, while a CUDA runtime (like a Colab GPU) actually gets compiled.
 
 ## Project structure
 
@@ -75,7 +86,7 @@ The library is split into a `config` module and an `architecture` module rather 
 
 Built bottom-up: small standalone pieces first, composed into progressively bigger `nn.Module`s. Each class exists because it's a distinct, reusable computation with its own shape/semantics — splitting them keeps each one testable and readable in isolation instead of one monolithic `forward`.
 
-- **`RMSNorm`** — root-mean-square layer normalization (like LayerNorm but without re-centering on the mean). It's its own class because it's used twice per decoder layer (before attention, before the MLP) plus once at the very end of the model — defining it once avoids repeating the same three lines everywhere.
+- **`RMSNorm`** — root-mean-square layer normalization (like LayerNorm but without re-centering on the mean). It's its own class because it's used twice per decoder layer (before attention, before the MLP) plus once at the very end of the model — defining it once avoids repeating the same three lines everywhere. It upcasts to `float32` internally for the variance computation (then casts back to the input dtype) so it stays numerically stable when the rest of the model runs in bf16.
 - **`RotaryEmbedding`** — precomputes the inverse-frequency table used by RoPE (Rotary Position Embeddings) from `head_dim` and `rope_theta`, then produces `cos`/`sin` tensors for a given sequence length. It's a module (not a plain function) so `inv_freq` can live as a registered buffer — it moves with the model when you call `.to(device)`, but isn't a trainable parameter.
 - **`rotate_half`** / **`apply_rotary_pos_emb`** — free functions, not methods, because they're pure tensor math with no state, applied identically to both queries and keys. Keeping them as standalone functions (rather than duplicating the logic inside `GroupedQueryAttention`) makes the RoPE math easy to unit-test on its own.
 - **`repeat_kv`** — expands the key/value heads so they broadcast against the (larger) number of query heads. It's a separate function because Grouped Query Attention (GQA) is the one part of the attention block that isn't "standard" multi-head attention, so isolating it makes the GQA-specific logic obvious at a glance.
@@ -103,4 +114,4 @@ Re-exports `AmaliaConfig` and `AmaliaForCausalLM` (via `__all__`) so callers can
 
 ### `main.py`
 
-A minimal runnable example: build a config, build the model with random weights, run one forward pass on random token ids, print the output shape. It exists purely to prove the wiring works end to end (`uv run main.py`) and to double as copy-paste-able usage code.
+A minimal runnable example: build a config, build the model with random weights in bf16, move it to GPU and `torch.compile` it if CUDA is available, run one forward pass on random token ids, print the output shape. It exists purely to prove the wiring works end to end (`uv run main.py`) and to double as copy-paste-able usage code.

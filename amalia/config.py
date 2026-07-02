@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+import torch
+
 
 @dataclass
 class AmaliaConfig:
@@ -13,6 +15,7 @@ class AmaliaConfig:
     rope_theta: float = 1_000_000.0
     rms_norm_eps: float = 1e-5
     tie_word_embeddings: bool = False
+    dtype: torch.dtype = torch.bfloat16
 
     @property
     def head_dim(self) -> int:
