@@ -1,6 +1,6 @@
 import torch
 
-from amalia_core import AmaliaConfig, AmaliaForCausalLM
+from amalia import AmaliaConfig, AmaliaForCausalLM
 
 
 def main():

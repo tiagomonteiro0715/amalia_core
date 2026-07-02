@@ -32,7 +32,7 @@ uv run main.py
 !uv pip install --system amalia
 
 import torch
-from amalia_core import AmaliaConfig, AmaliaForCausalLM
+from amalia import AmaliaConfig, AmaliaForCausalLM
 
 # Initialize the model with random weights
 config = AmaliaConfig()
