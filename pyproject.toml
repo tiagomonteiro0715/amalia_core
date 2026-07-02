@@ -1,8 +1,10 @@
 [project]
 name = "amalia"
-version = "0.5.0"
+version = "0.5.1"
 description = "Add your description here"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=2.5.0",
